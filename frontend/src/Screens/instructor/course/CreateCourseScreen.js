@@ -1,6 +1,9 @@
 import { useState } from "react";
+import Resizer from "react-image-file-resizer";
 import InstructorNav from "../../../components/nav/InstructorNav";
 import CourseCreateForm from "../../../components/forms/CourseCreate";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 const CreateCourseScreen = () => {
   const [values, setVaues] = useState({
@@ -10,15 +13,61 @@ const CreateCourseScreen = () => {
     uploading: false,
     paid: true,
     loading: false,
-    imagePreview: "",
     category: "development",
   });
+  const [uploadedButtonText, setUploadedButtonText] = useState("Upload Image");
+  const [preview, setPreview] = useState("");
+  const [image, setImage] = useState({});
+  const config = {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
 
   const handleChange = (e) => {
     setVaues({ ...values, [e.target.name]: e.target.value });
   };
 
-  const handleImage = (e) => {};
+  const handleRemoveImage = async () => {
+    try {
+      setVaues({ ...values, loading: true });
+      await axios.post("/api/course/remove-image", { image }, config);
+
+      setPreview("");
+      setImage({});
+      setUploadedButtonText("Upload Image");
+      setVaues({ ...values, loading: false });
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+      setVaues({ ...values, loading: false });
+    }
+  };
+
+  const handleImage = (e) => {
+    let file = e.target.files[0];
+    setVaues({ ...values, loading: true });
+    setUploadedButtonText(file.name);
+    setPreview(window.URL.createObjectURL(file));
+    Resizer.imageFileResizer(file, 720, 500, "JPEG", 100, 0, async (uri) => {
+      try {
+        let { data } = await axios.post(
+          "/api/course/upload-image",
+          {
+            image: uri,
+          },
+          config
+        );
+        setImage(data);
+        //setPreview(data.Location);
+        setVaues({ ...values, loading: false });
+      } catch (error) {
+        console.log(error);
+        setVaues({ ...values, loading: false });
+        toast.error("Image Upload Fail,Try Again");
+      }
+    });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -41,6 +90,9 @@ const CreateCourseScreen = () => {
                 handleChange={handleChange}
                 handleSubmit={handleSubmit}
                 handleImage={handleImage}
+                preview={preview}
+                uploadedButtonText={uploadedButtonText}
+                handleRemoveImage={handleRemoveImage}
               />
             </div>
           </div>

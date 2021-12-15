@@ -9,11 +9,12 @@ import { notFound, errorHandler } from "./middleware/errMiddleware";
 import userRoute from "./routes/userRoutes";
 import authRoute from "./routes/authRoutes";
 import roleRoute from "./routes/roleRoutes";
+import courseRoute from "./routes/courseRoutes";
 
 const app = express();
 dotenv.config();
 
-// const csrfProtection = csrf({ cookie: true });
+const csrfProtection = csrf({ cookie: true });
 
 // middleware
 app.use(express.json({ limit: "5mb" }));
@@ -30,11 +31,12 @@ if (process.env.NODE_ENV === "development") {
 app.use("/api/user", userRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/role", roleRoute);
+app.use("/api/course", courseRoute);
 
-// app.use(csrfProtection);
-// app.get("/api/csrf-token", (req, res) => {
-//   res.json({ csrfToken: req.csrfToken() });
-// });
+app.use(csrfProtection);
+app.get("/api/csrf-token", (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
 
 // connecting to the database
 connectDB();

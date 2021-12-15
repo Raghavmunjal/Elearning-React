@@ -34,7 +34,7 @@ const HomeScreen = () => {
         </div>
       </div>
 
-      <div className="container education">
+      <div className="container education mt-5">
         <div className="row">
           <div className="col-md-6">
             <img src={t3} alt="" />

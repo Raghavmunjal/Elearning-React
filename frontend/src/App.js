@@ -1,9 +1,12 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useContext } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { LoadingOutlined } from "@ant-design/icons";
 import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
+import axios from "axios";
+import { useHistory } from "react-router-dom";
+import { Context } from "./context/index";
 import Header from "./components/nav/Header";
 import UserRoute from "./components/protectedRoutes/UserRoute";
 import InstructorRoute from "./components/protectedRoutes/InstructorRoute";
@@ -26,8 +29,39 @@ const InstructorDashboardScreen = lazy(() =>
 const CreateCourseScreen = lazy(() =>
   import("./Screens/instructor/course/CreateCourseScreen.js")
 );
+const CallbackScreen = lazy(() => import("./Screens/stripe/CallbackScreen.js"));
 
 const App = () => {
+  const { dispatch } = useContext(Context);
+  const history = useHistory();
+  axios.interceptors.response.use(
+    function (response) {
+      // any status code that lie within range of 2XX  cause this function to trigger
+      return response;
+    },
+    function (error) {
+      // any status code that falls outside within range of 2XX  cause this function to trigger
+      let res = error.response;
+      if (res.status === 401 && res.config && !res.config.__isRetryRequest) {
+        return new Promise((resolve, reject) => {
+          axios
+            .get("/api/user/logout")
+            .then((data) => {
+              console.log("401 error > logout");
+              dispatch({ type: "LOGOUT" });
+              window.localStorage.removeItem("user");
+              history.push("/login");
+            })
+            .catch((err) => {
+              console.log("AXIOS INTERCEPTORS ERR", err);
+              reject(err);
+            });
+        });
+      }
+      return Promise.reject(error);
+    }
+  );
+
   return (
     <Router>
       <Suspense
@@ -64,6 +98,7 @@ const App = () => {
             path="/instructor/course/create"
             component={CreateCourseScreen}
           />
+          <UserRoute exact path="/stripe/callback" component={CallbackScreen} />
         </Switch>
       </Suspense>
     </Router>
