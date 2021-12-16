@@ -30,6 +30,9 @@ const CreateCourseScreen = lazy(() =>
   import("./Screens/instructor/course/CreateCourseScreen.js")
 );
 const CallbackScreen = lazy(() => import("./Screens/stripe/CallbackScreen.js"));
+const CourseDetailsScreen = lazy(() =>
+  import("./Screens/instructor/course/CourseDetailsScreen.js")
+);
 
 const App = () => {
   const { dispatch } = useContext(Context);
@@ -97,6 +100,11 @@ const App = () => {
             exact
             path="/instructor/course/create"
             component={CreateCourseScreen}
+          />
+          <InstructorRoute
+            exact
+            path="/instructor/course/:slug"
+            component={CourseDetailsScreen}
           />
           <UserRoute exact path="/stripe/callback" component={CallbackScreen} />
         </Switch>

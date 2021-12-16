@@ -1,6 +1,8 @@
 import AWS from "aws-sdk";
 import { nanoid } from "nanoid";
 import dotenv from "dotenv";
+import slugify from "slugify";
+import courseSchema from "../models/courseModel";
 
 dotenv.config();
 
@@ -15,7 +17,7 @@ const S3 = new AWS.S3(awsconfig);
 
 //@desc   Upload Image
 //@routes POST /api/course/upload-image
-//@access PRIVATE
+//@access PRIVATE/INSTRUCTOR
 export const uploadImage = async (req, res) => {
   try {
     const { image } = req.body;
@@ -54,12 +56,13 @@ export const uploadImage = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    res.status(400).send("Error,Please Try Again");
   }
 };
 
 //@desc   Remove Image
 //@routes DELETE /api/course/remove-image
-//@access PRIVATE
+//@access PRIVATE/INSTRUCTOR
 export const removeImage = async (req, res) => {
   try {
     const { image } = req.body;
@@ -76,5 +79,63 @@ export const removeImage = async (req, res) => {
       }
       res.send({ success: true });
     });
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+    res.status(400).send("Error,Please Try Again");
+  }
+};
+
+//@desc   Create Course
+//@routes POST /api/course
+//@access PRIVATE/INSTRUCTOR
+export const createCourse = async (req, res) => {
+  try {
+    const alreadyExist = await courseSchema.findOne({
+      slug: slugify(req.body.name.toLowerCase()),
+    });
+    if (alreadyExist) return res.status(400).send("Title is already taken");
+
+    const course = await new courseSchema({
+      slug: slugify(req.body.name),
+      instructor: req.user.id,
+      ...req.body,
+    }).save();
+
+    res.json(course);
+  } catch (error) {
+    console.log(error);
+    res.status(400).send("Cannot Create Course Error,Please Try Again");
+  }
+};
+
+//@desc   Get Course of particular instructor
+//@routes GET /api/course/instructor-course
+//@access PRIVATE/INSTRUCTOR
+export const getInstructorCourses = async (req, res) => {
+  try {
+    const courses = await courseSchema
+      .find({ instructor: req.user.id })
+      .sort({ createdAt: -1 })
+      .exec();
+    res.json(courses);
+  } catch (error) {
+    console.log(error);
+    res.status(400).send("Error, Please Try Again");
+  }
+};
+
+//@desc   Get Details of course
+//@routes GET /api/course/:slug
+//@access PRIVATE/INSTRUCTOR
+export const getCourseDetails = async (req, res) => {
+  try {
+    const course = await courseSchema
+      .findOne({ slug: req.params.slug })
+      .populate("instructor", "_id name")
+      .exec();
+    res.json(course);
+  } catch (error) {
+    console.log(error);
+    res.status(400).send("Error, Please Try Again");
+  }
 };

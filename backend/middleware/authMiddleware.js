@@ -1,5 +1,6 @@
 import jwt from "express-jwt";
 import dotenv from "dotenv";
+import userSchema from "../models/userModel";
 
 dotenv.config();
 export const protect = jwt({
@@ -9,6 +10,20 @@ export const protect = jwt({
   secret: process.env.JWT_SECRET,
   algorithms: ["HS256"],
 }); // it will req.user
+
+export const isInstructor = async (req, res, next) => {
+  try {
+    const user = await userSchema
+      .findById(req.user.id)
+      .select("-password")
+      .exec();
+    if (!user.role.includes("Instructor"))
+      return res.status(403).send("Unauthorized");
+    else next();
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 // import jwt from "jsonwebtoken";
 // import asyncHandler from "express-async-handler";

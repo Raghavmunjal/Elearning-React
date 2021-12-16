@@ -141,24 +141,6 @@ export const currentUser = async (req, res) => {
   }
 };
 
-//@desc   check if user is instructor or not
-//@routes GET /api/user/isInstructor
-//@access PRIVATE
-export const currentInstructor = async (req, res) => {
-  try {
-    const user = await userSchema
-      .findById(req.user.id)
-      .select("-password")
-      .exec();
-    if (!user.role.includes("Instructor"))
-      return res.status(403).send("Unauthorized");
-    else return res.json({ success: true });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).send("Error try again");
-  }
-};
-
 //@desc   send otp to verify email
 //@routes GET /api/user/send-otp
 //@access PUBLIC

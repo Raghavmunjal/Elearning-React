@@ -3,9 +3,12 @@ import Resizer from "react-image-file-resizer";
 import InstructorNav from "../../../components/nav/InstructorNav";
 import CourseCreateForm from "../../../components/forms/CourseCreate";
 import { toast } from "react-toastify";
+import { useHistory } from "react-router-dom";
 import axios from "axios";
 
 const CreateCourseScreen = () => {
+  const history = useHistory();
+
   const [values, setVaues] = useState({
     name: "",
     description: "",
@@ -69,8 +72,23 @@ const CreateCourseScreen = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      const { data } = await axios.post(
+        "/api/course",
+        {
+          ...values,
+          image,
+        },
+        config
+      );
+      toast.success("Great! Now you can start adding lessons");
+      history.push("/instructor");
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response.data);
+    }
   };
 
   return (
